@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐍 Cobra Ladrão — Jogo da Cobrinha Multijogador</title>
+<style>
+  :root {
+    --bg: #0b1220;
+    --panel: #141c2e;
+    --accent: #22d3ee;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: radial-gradient(1200px 600px at 50% -10%, #16233c 0%, var(--bg) 60%);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+  }
+  h1 {
+    font-size: clamp(20px, 3.2vw, 34px);
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+    text-shadow: 0 0 18px rgba(34, 211, 238, .35);
+  }
+  .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 14px; text-align: center; }
+
+  #setup {
+    background: var(--panel);
+    border: 1px solid #24324f;
+    border-radius: 14px;
+    padding: 18px 22px;
+    width: min(560px, 94vw);
+    box-shadow: 0 10px 40px rgba(0,0,0,.45);
+  }
+  #setup label { display:block; margin: 10px 0 4px; font-size: 13px; color: var(--muted); }
+  #setup select, #setup input[type=text] {
+    width: 100%;
+    background: #0f1626;
+    color: var(--text);
+    border: 1px solid #2b3a5c;
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 14px;
+    outline: none;
+  }
+  #setup select:focus, #setup input:focus { border-color: var(--accent); }
+  .row { display:flex; gap: 12px; }
+  .row > div { flex: 1; }
+  .players-config { margin-top: 12px; display: grid; gap: 10px; }
+  .player-row {
+    display:flex; align-items:center; gap:10px;
+    background:#0f1626; border:1px solid #2b3a5c; border-radius:10px; padding:8px 12px;
+  }
+  .swatch { width:16px; height:16px; border-radius:4px; flex:none; box-shadow:0 0 10px currentColor; }
+  .player-row input { flex:1; }
+  .badge { font-size:11px; color:var(--muted); white-space:nowrap; }
+  button.primary {
+    margin-top: 16px;
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #04121a;
+    background: linear-gradient(135deg, #22d3ee, #4ade80);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform .08s ease, filter .2s;
+  }
+  button.primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+  #gameWrap { display: none; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
+  #hud {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    width: min(96vw, 860px);
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid #24324f;
+    border-left: 5px solid var(--c, #fff);
+    border-radius: 10px;
+    padding: 8px 14px;
+    min-width: 150px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: opacity .3s, filter .3s;
+  }
+  .card.dead { opacity: .38; filter: grayscale(1); }
+  .card .p-name { font-weight: 700; font-size: 14px; }
+  .card .p-score { font-size: 13px; color: var(--muted); }
+  .card .p-score b { color: var(--text); font-size: 16px; }
+  canvas {
+    background: #0a101d;
+    border: 2px solid #2b3a5c;
+    border-radius: 12px;
+    box-shadow: 0 0 60px rgba(34,211,238,.08), 0 12px 40px rgba(0,0,0,.5);
+    max-width: 96vw;
+    touch-action: none;
+  }
+  #footerBar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:center; }
+  button.ghost {
+    background: transparent;
+    border: 1px solid #2b3a5c;
+    color: var(--muted);
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  button.ghost:hover { border-color: var(--accent); color: var(--text); }
+  #hint { color: var(--muted); font-size: 12px; text-align:center; }
+
+  #overlay {
+    position: fixed; inset: 0;
+    background: rgba(5, 8, 16, .82);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+  #overlay .box {
+    background: var(--panel);
+    border: 1px solid #2b3a5c;
+    border-radius: 16px;
+    padding: 28px 36px;
+    text-align: center;
+    max-width: 92vw;
+    box-shadow: 0 20px 80px rgba(0,0,0,.6);
+  }
+  #overlay h2 { font-size: 26px; margin-bottom: 8px; }
+  #overlay p { color: var(--muted); margin-bottom: 6px; font-size: 14px; }
+  #overlay .winner { font-size: 18px; color: #4ade80; margin: 10px 0; }
+  #countdown {
+    position: fixed; inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 110px;
+    font-weight: 800;
+    color: var(--accent);
+    text-shadow: 0 0 40px rgba(34,211,238,.6);
+    pointer-events: none;
+    z-index: 9;
+  }
+</style>
+</head>
+<body>
+
+<h1>🐍 Cobra Ladrão</h1>
+<div class="subtitle">Clássico jogo da cobrinha para até 4 jogadores — <b>se bater na cabeça de outro jogador, você rouba metade das bolinhas dele!</b></div>
+
+<!-- ===== TELA DE CONFIGURAÇÃO ===== -->
+<div id="setup">
+  <div class="row">
+    <div>
+      <label>Número de jogadores</label>
+      <select id="numPlayers">
+        <option value="1">1 jogador</option>
+        <option value="2" selected>2 jogadores</option>
+        <option value="3">3 jogadores</option>
+        <option value="4">4 jogadores</option>
+      </select>
+    </div>
+    <div>
+      <label>Velocidade</label>
+      <select id="speed">
+        <option value="150">Lenta (fácil)</option>
+        <option value="105" selected>Normal</option>
+        <option value="75">Rápida (difícil)</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="players-config" id="playersConfig"></div>
+
+  <button class="primary" id="btnStart">▶ Começar partida</button>
+</div>
+
+<!-- ===== TELA DO JOGO ===== -->
+<div id="gameWrap">
+  <div id="hud"></div>
+  <canvas id="board" width="720" height="480"></canvas>
+  <div id="footerBar">
+    <button class="ghost" id="btnPause">⏸ Pausar (Espaço)</button>
+    <button class="ghost" id="btnMenu">↩ Menu</button>
+    <span id="hint"></span>
+  </div>
+</div>
+
+<div id="countdown"></div>
+
+<div id="overlay">
+  <div class="box">
+    <h2 id="ovTitle">Fim de jogo!</h2>
+    <p id="ovMsg"></p>
+    <div class="winner" id="ovWinner"></div>
+    <button class="primary" id="btnAgain" style="width:auto; padding:10px 30px;">Jogar novamente</button>
+  </div>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>
