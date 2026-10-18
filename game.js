@@ -565,8 +565,10 @@
     if (nPlayers === 1) spawnFood("big");
 
     $("setup").style.display = "none";
-    $("gameWrap").style.display = "flex";
+    document.body.classList.remove("showing-setup");
+    document.body.classList.add("playing");
     $("overlay").style.display = "none";
+    fitCanvasToScreen();
     buildHUD();
 
     const hints = players.map(p => `${p.name}: ${p.keyLabel}`).join("  •  ");
@@ -590,10 +592,24 @@
   function backToMenu() {
     stopLoop();
     running = false;
-    $("gameWrap").style.display = "none";
+    document.body.classList.remove("playing");
+    document.body.classList.add("showing-setup");
     $("overlay").style.display = "none";
     $("setup").style.display = "block";
   }
+
+  // ---------- Ajustar o tabuleiro para ocupar a tela inteira ----------
+  function fitCanvasToScreen() {
+    const wrap = $("gameWrap");
+    if (!document.body.classList.contains("playing") || !wrap) return;
+    const hud = $("hud"), foot = $("footerBar");
+    const availH = Math.max(100, window.innerHeight - (hud ? hud.offsetHeight : 0) - (foot ? foot.offsetHeight : 0) - 24);
+    const availW = Math.max(100, window.innerWidth - 20);
+    const scale = Math.min(availW / (COLS * CELL), availH / (ROWS * CELL));
+    canvas.style.width  = Math.floor(COLS * CELL * scale) + "px";
+    canvas.style.height = Math.floor(ROWS * CELL * scale) + "px";
+  }
+  window.addEventListener("resize", fitCanvasToScreen);
 
   // ---------- Tela de configuração ----------
   function renderPlayerRows() {
