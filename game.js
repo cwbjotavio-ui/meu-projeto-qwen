@@ -10,7 +10,7 @@
   "use strict";
 
   // ---------- Configuração do tabuleiro ----------
-  const COLS = 48, ROWS = 32, CELL = 15;      // canvas = 720x480
+  const COLS = 64, ROWS = 44, CELL = 20;      // canvas = 1280x880
   const MAX_PLAYERS = 4;
 
   const PLAYER_DEFS = [
@@ -229,7 +229,7 @@
     });
 
     // 8) manter comida no tabuleiro
-    while (foods.length < 4 + players.filter(p => p.alive).length) spawnFood("normal");
+    while (foods.length < 8 + players.filter(p => p.alive).length * 2) spawnFood("normal");
     if (round % 90 === 0 && Math.random() < 0.6) spawnFood("big");
 
     // 9) floaters (textinhos flutuantes)
@@ -446,11 +446,11 @@
           ctx.fillStyle = "#0b1220";
           const ex = p.dir.dx, ey = p.dir.dy;
           const cx = c.x * CELL + CELL / 2, cy = c.y * CELL + CELL / 2;
-          const off = 3.2;
+          const off = CELL * 0.21;
           const px = -ey, py = ex; // perpendicular
           ctx.beginPath();
-          ctx.arc(cx + ex * 3 + px * off, cy + ey * 3 + py * off, 1.7, 0, 7);
-          ctx.arc(cx + ex * 3 - px * off, cy + ey * 3 - py * off, 1.7, 0, 7);
+          ctx.arc(cx + ex * CELL * 0.2 + px * off, cy + ey * CELL * 0.2 + py * off, CELL * 0.115, 0, 7);
+          ctx.arc(cx + ex * CELL * 0.2 - px * off, cy + ey * CELL * 0.2 - py * off, CELL * 0.115, 0, 7);
           ctx.fill();
         }
       });
@@ -458,11 +458,11 @@
 
     // textinhos flutuantes
     ctx.textAlign = "center";
-    ctx.font = "bold 13px sans-serif";
+    ctx.font = `bold ${Math.round(CELL * 0.85)}px sans-serif`;
     floaters.forEach(fl => {
       ctx.globalAlpha = Math.min(1, fl.life / 8);
       ctx.fillStyle = fl.color;
-      ctx.fillText(fl.text, fl.x * CELL + CELL / 2, fl.y * CELL - (12 - fl.life) * 1.6);
+      ctx.fillText(fl.text, fl.x * CELL + CELL / 2, fl.y * CELL - (12 - fl.life) * CELL * 0.11);
     });
     ctx.globalAlpha = 1;
 
@@ -470,11 +470,11 @@
       ctx.fillStyle = "rgba(5,8,16,0.6)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = "#e2e8f0";
-      ctx.font = "bold 34px sans-serif";
+      ctx.font = `bold ${Math.round(canvas.width / 26)}px sans-serif`;
       ctx.fillText("⏸ PAUSADO", canvas.width / 2, canvas.height / 2);
-      ctx.font = "14px sans-serif";
+      ctx.font = `${Math.round(canvas.width / 64)}px sans-serif`;
       ctx.fillStyle = "#94a3b8";
-      ctx.fillText("Pressione Espaço para continuar", canvas.width / 2, canvas.height / 2 + 30);
+      ctx.fillText("Pressione Espaço para continuar", canvas.width / 2, canvas.height / 2 + canvas.width / 30);
     }
   }
 
@@ -561,7 +561,7 @@
       makePlayer({ ...d, idx: i, name: names[i] || d.name }, 0)
     );
     recomputeOccupied();
-    for (let i = 0; i < 6 + nPlayers; i++) spawnFood("normal");
+    for (let i = 0; i < 10 + nPlayers * 2; i++) spawnFood("normal");
     if (nPlayers === 1) spawnFood("big");
 
     $("setup").style.display = "none";
